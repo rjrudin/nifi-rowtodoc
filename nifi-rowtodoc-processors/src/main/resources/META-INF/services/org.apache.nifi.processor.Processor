@@ -1,0 +1,3 @@
+com.marklogic.nifi.processors.rowtodoc.ExecuteSQLToColumnMaps
+com.marklogic.nifi.processors.rowtodoc.ExecuteChildQueriesOnColumnMaps
+com.marklogic.nifi.processors.rowtodoc.ConvertColumnMapsToJSON
