@@ -14,7 +14,7 @@ NiFi, and you'll now be able to use the following processors:
 
 - ExecuteSQLToColumnMaps
 - ExecuteChildQueriesOnColumnMaps
-- ConvertColumnMapsToJSON
+- ConvertColumnMapsToJSON (an XML one will soon exist)
 
 Each processor is described below, with the [MySQL Sakila dataset](https://dev.mysql.com/doc/sakila/en/sakila-structure.html) 
 used as an example. The goal is to combine all of the data from the Customer, Rental, and Payment tables into Customer
