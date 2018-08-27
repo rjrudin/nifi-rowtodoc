@@ -98,4 +98,38 @@ To write documents to MarkLogic, use the PutMarkLogic processor from the [MarkLo
 Connect the "CONTENT" relationship of the ConvertColumnMapsToJSON processor to PutMarkLogic. Configure the "SUCCESS" 
 relationship of ConvertColumnMapsToJSON to automatically terminate.
 
- 
+Another example - mapping a join table
+=========
+
+The Sakila schema has a many:many relationship between films and actors. This relationship is captured via the "film_actor"
+join table. It's not likely that films and actors would be mapped to the same document - these both seem like first-class
+nouns in a model that should be in separate documents. But for sake of example, let's look at how film documents can be 
+created with actor data in them.
+
+First, configure the ExecuteSQLToColumnMaps processor with the following simple query:
+
+    select * from film
+
+Next, to add actors to each film, configure the ExecuteChildQueriesOnColumnMaps processor with the following child query JSON:
+
+    {
+      "primaryKeyColumnName": "film_id",
+      "childQueries": [
+        {
+          "query": "select a.* from actor a inner join film_actor fa on fa.actor_id = a.actor_id",
+          "propertyName": "actors",
+          "foreignKeyColumnName": "film_id"
+        }
+      ]
+    }
+
+That has a single child query that grabs all of the data from each actor row that matches any of the film column maps
+that this processor receives in a single batch. Each actor row becomes a new column map that is stored under the "actors"
+key of each film column map.
+
+The ConvertColumnMapsToJSON processor can be left alone, as it doesn't yet have any configuration.
+
+Finally, configure the PutMarkLogic processor to your liking - e.g. customize the collections, permissions, URI, etc. 
+
+Running the flow will then produce "film" documents, each with an "actors" array that contains a JSON object per 
+related actor.
