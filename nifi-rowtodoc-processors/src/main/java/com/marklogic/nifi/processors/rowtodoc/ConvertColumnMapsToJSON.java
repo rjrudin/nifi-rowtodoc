@@ -2,7 +2,10 @@ package com.marklogic.nifi.processors.rowtodoc;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import org.apache.nifi.annotation.lifecycle.OnScheduled;
 import org.apache.nifi.components.PropertyDescriptor;
+import org.apache.nifi.components.Validator;
 import org.apache.nifi.flowfile.FlowFile;
 import org.apache.nifi.processor.ProcessContext;
 import org.apache.nifi.processor.ProcessSession;
@@ -10,6 +13,7 @@ import org.apache.nifi.processor.ProcessorInitializationContext;
 import org.apache.nifi.processor.Relationship;
 import org.apache.nifi.processor.exception.ProcessException;
 
+import java.sql.Date;
 import java.util.*;
 
 /**
@@ -20,8 +24,14 @@ public class ConvertColumnMapsToJSON extends AbstractColumnMapProcessor {
 	protected List<PropertyDescriptor> properties;
 	protected Set<Relationship> relationships;
 
-	// TODO Pull this from a controller service?
-	private ObjectMapper objectMapper = new ObjectMapper();
+	private ObjectMapper objectMapper;
+
+	public static final PropertyDescriptor SQL_DATE_FORMAT = new PropertyDescriptor.Builder()
+		.name("java.sql.Date format")
+		.defaultValue("yyyy-MM-dd")
+		.description("Date format for serializing instances of java.sql.Date")
+		.addValidator(Validator.VALID)
+		.build();
 
 	protected static final Relationship SUCCESS = new Relationship.Builder()
 		.name("SUCCESS")
@@ -36,6 +46,7 @@ public class ConvertColumnMapsToJSON extends AbstractColumnMapProcessor {
 	@Override
 	public void init(final ProcessorInitializationContext context) {
 		List<PropertyDescriptor> list = new ArrayList<>();
+		list.add(SQL_DATE_FORMAT);
 		properties = Collections.unmodifiableList(list);
 
 		Set<Relationship> set = new LinkedHashSet<>();
@@ -69,6 +80,20 @@ public class ConvertColumnMapsToJSON extends AbstractColumnMapProcessor {
 		}
 	}
 
+	@OnScheduled
+	public void initializeObjectMapper(ProcessContext context) {
+		getLogger().info("Initializing Jackson ObjectMapper");
+		objectMapper = new ObjectMapper();
+
+		final String sqlDateFormat = context.getProperty(SQL_DATE_FORMAT).getValue();
+		if (sqlDateFormat != null) {
+			getLogger().info("Using format for serializing instances of java.sql.Date: " + sqlDateFormat);
+			SimpleModule simpleModule = new SimpleModule();
+			simpleModule.addSerializer(Date.class, new SqlDateSerializer(sqlDateFormat));
+			objectMapper.registerModule(simpleModule);
+		}
+	}
+
 	/**
 	 * Serialize the given column map to JSON and write it to a new FlowFile.
 	 *
@@ -76,16 +101,18 @@ public class ConvertColumnMapsToJSON extends AbstractColumnMapProcessor {
 	 * @param columnMap
 	 */
 	protected void createNewFlowFileForColumnMap(ProcessSession session, Map<String, Object> columnMap) {
-		String documentJson;
-		try {
-			documentJson = objectMapper.writeValueAsString(columnMap);
-		} catch (JsonProcessingException e) {
-			throw new ProcessException("Unable to write column map to JSON, cause: " + e.getMessage(), e);
-		}
-		final String jsonToWrite = documentJson;
+		final String jsonToWrite = serializeColumnMap(columnMap);
 		FlowFile newFlowFile = session.create();
 		session.write(newFlowFile, out -> out.write(jsonToWrite.getBytes()));
 		session.transfer(newFlowFile, CONTENT);
+	}
+
+	protected String serializeColumnMap(Map<String, Object> columnMap) {
+		try {
+			return objectMapper.writeValueAsString(columnMap);
+		} catch (JsonProcessingException e) {
+			throw new ProcessException("Unable to write column map to JSON, cause: " + e.getMessage(), e);
+		}
 	}
 
 	@Override
@@ -98,4 +125,7 @@ public class ConvertColumnMapsToJSON extends AbstractColumnMapProcessor {
 		return properties;
 	}
 
+	public ObjectMapper getObjectMapper() {
+		return objectMapper;
+	}
 }
