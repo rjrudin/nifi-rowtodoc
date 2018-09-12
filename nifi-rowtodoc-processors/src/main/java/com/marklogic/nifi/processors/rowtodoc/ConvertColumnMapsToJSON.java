@@ -3,6 +3,7 @@ package com.marklogic.nifi.processors.rowtodoc;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import org.apache.nifi.annotation.documentation.CapabilityDescription;
 import org.apache.nifi.annotation.lifecycle.OnScheduled;
 import org.apache.nifi.components.PropertyDescriptor;
 import org.apache.nifi.components.Validator;
@@ -16,9 +17,7 @@ import org.apache.nifi.processor.exception.ProcessException;
 import java.sql.Date;
 import java.util.*;
 
-/**
- * Converts each column map in a list (a List<Map<String, Object>>) into a JSON document.
- */
+@CapabilityDescription("Given a FlowFile containing a list of column maps, converts each column map into a JSON document that is sent to the CONTENT relationship")
 public class ConvertColumnMapsToJSON extends AbstractColumnMapProcessor {
 
 	protected List<PropertyDescriptor> properties;

@@ -1,6 +1,7 @@
 package com.marklogic.nifi.processors.rowtodoc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.nifi.annotation.documentation.CapabilityDescription;
 import org.apache.nifi.components.PropertyDescriptor;
 import org.apache.nifi.dbcp.DBCPService;
 import org.apache.nifi.flowfile.FlowFile;
@@ -16,6 +17,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.*;
 
+@CapabilityDescription("Given a FlowFile containing a list of column maps, executes child queries to populate child data on each column map")
 public class ExecuteChildQueriesOnColumnMaps extends AbstractColumnMapProcessor {
 
 	protected List<PropertyDescriptor> properties;

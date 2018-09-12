@@ -1,5 +1,7 @@
 package com.marklogic.nifi.processors.rowtodoc;
 
+import org.apache.nifi.annotation.behavior.TriggerSerially;
+import org.apache.nifi.annotation.documentation.CapabilityDescription;
 import org.apache.nifi.components.PropertyDescriptor;
 import org.apache.nifi.dbcp.DBCPService;
 import org.apache.nifi.flowfile.FlowFile;
@@ -14,6 +16,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 
+@CapabilityDescription("Executes a SQL query and returns each batch of rows as a list of column maps - i.e. a List<Map<String, Object>>")
+@TriggerSerially
 public class ExecuteSQLToColumnMaps extends AbstractProcessor {
 
 	protected List<PropertyDescriptor> properties;
